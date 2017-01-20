@@ -3,14 +3,13 @@ breed [cars car]
 cars-own [payedtoll? inline? target]
 tollbooths-own [queue]
 
-globals[mouse-was-down? placable? spawnx spawny currentcar grassy grassx totalthrough]
+globals[mouse-was-down? placable? spawnx spawny currentcar]
 
 to-report mouse-clicked?
   report (mouse-was-down? = true and not mouse-down?)
 end;; taken from stackoverflow user Bryan Head
 
 to clearcars
-  reset-ticks
   ask cars
   [
     die
@@ -102,97 +101,93 @@ to go
       set shape "car"
       set inline? false
       set payedtoll? false
-      let nearcar min-one-of other cars [distance myself]
-      if nearcar != nobody
-      [
-        if (distance nearcar) < .3
-        [
-          die
-        ]
-      ];;spawn car at entrance
-    ]
+    ];;spawn car at entrance
   ]
   ask cars
   [
     if payedtoll? = false and inline? = false ;;get cars to move toward tollbooth if they havent payed yet
     [
       set currentcar self
-      let x min-one-of tollbooths with [(queue * paytime) <= ((distance currentcar) / speed)] [distance myself]
+      let x min-one-of tollbooths with [(queue * paytime) <= ((distance currentcar) / speed)] [distance myself];; if the queue will be empty upon arrival, hop in line
       if x = nobody
       [
-        set x min-one-of tollbooths [distance myself]
+        set x min-one-of tollbooths [distance myself];; if no queue will be empty, default to the closest tollbooth
       ]
-      set heading towards x
       set target x
-      let closestgrass one-of patches with [pcolor = green] in-cone (driver-safety * speed) .5
-      if not (closestgrass = nobody)
+      let endofline max-one-of other cars with [target = x] [nw:distance-to x]
+      if endofline = nobody
       [
-        set heading 90
+        set endofline target
       ]
-      let closestcar one-of other cars in-cone (driver-safety * speed) dangercone
-      if closestcar = nobody
-      [
-        fd min (list speed distance x)
-      ]
-      if distance x < 1
-      [
-        set inline? true
+      ask min-one-of links [nw:distance-to x][die]
+      create-link-with endofline
+      set heading towards endofline
+      if distance endofline >= 1
+        [
+        fd min (list 1 distance x)
+        if distance x < 1
+        [
+          set inline? true
+        ]
       ]
     ]
     if payedtoll? = true ;;get cars to move away from toll booth after paying toll
     [
       let x min-one-of patches with [pcolor = blue] [distance myself]
       set heading towards x
-      let closestgrass one-of patches with [pcolor = green] in-cone (driver-safety * speed) .5         if not (closestgrass = nobody)
-      [
-        ask closestgrass [set grassy pycor]
-        ifelse grassx > xcor
-        [
-          set heading 135
-        ]
-        [
-          set heading 45
-        ]
-      ]
-      let closestcar one-of other cars in-cone (driver-safety * speed) dangercone
-      if closestcar = nobody
-      [
-        fd speed
-      ]
+      fd 1
       if pcolor = blue
       [
         die
       ]
     ]
-    if not inline?
-    [
-      let x min-one-of other cars with [not inline?] [distance myself]
-      if x != nobody
-      [
-        if (distance x) < .3
-        [
-          show "crash"
-          die
-        ]
-      ]
-    ];;set up crashing for not in line cars
+    ;;if not inline?
+    ;;[
+    ;; let x min-one-of other cars with [not inline?] [distance myself]
+    ;;  if x != nobody
+    ;;  [
+    ;;    if (distance x) < .3;; if cars get too close, they crash and die
+    ;;   [
+    ;;      show "crash"
+    ;;      die
+    ;;    ]
+    ;;  ]
+    ;;];;set up crashing for not in line cars
   ]
   ask tollbooths
   [
-    set queue count cars with [distance myself < 1]
-    if random (2 * paytime) = 1
+    ifelse max-one-of cars with [target = myself] [nw:distance-to myself] != nobody
     [
-      let cartorelease one-of cars with [distance myself < 1]
+      set queue nw:distance-to (max-one-of cars with [target = myself] [nw:distance-to myself]);;set the queue to the length of the furthest away car on the link line
+      if queue = false
+      [
+        set queue 0
+      ]
+    ]
+    [
+      set queue 0;; if there are no cars linked to the toll booth, the queue length is 0
+    ]
+    if random paytime = 1
+    [
+      let cartorelease min-one-of cars with [target = myself] [nw:distance-to myself];;release a car randomly with probability 1/paytime
       if cartorelease != nobody
       [
-        set totalthrough totalthrough + 1
         ask cartorelease
         [
-          set payedtoll? true
+          set payedtoll? true;;set the toll as having been paid
+          if count link-neighbors > 1
+          [
+            ask max-one-of link-neighbors [nw:distance-to target];;the neighbor which is away from the center will always be selected by this
+            [
+              create-link-with target;; this will make the two away turtle link to the target tollbooth
+            ]
+          ]
+          ask links [die];; unlink the car from the toll booth
         ]
       ]
     ]
   ];;set queue to count cars
+  ask links [set color white]
   tick
 end
 
@@ -321,7 +316,7 @@ oddsofcar
 oddsofcar
 0
 1
-0.8
+0.1
 .1
 1
 NIL
@@ -353,7 +348,7 @@ paytime
 paytime
 0
 10
-5
+9
 1
 1
 NIL
@@ -426,45 +421,19 @@ NIL
 1
 
 SLIDER
-12
+13
 139
-184
+185
 172
-driver-safety
-driver-safety
+stopping-distance
+stopping-distance
 0
-2
-1.2
+1
+1
 .1
 1
 NIL
 HORIZONTAL
-
-SLIDER
-12
-175
-184
-208
-dangercone
-dangercone
-0
-180
-30
-10
-1
-NIL
-HORIZONTAL
-
-MONITOR
-230
-487
-315
-532
-throughput
-totalthrough / ticks
-17
-1
-11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -809,7 +778,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 6.0-M6
+NetLogo 5.2.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
