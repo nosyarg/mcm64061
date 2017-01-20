@@ -107,11 +107,10 @@ to go
     if payedtoll? = false and inline? = false ;;get cars to move toward tollbooth if they havent payed yet
     [
       set currentcar self
-      let x min-one-of tollbooths with [queue * paytime <= (distance currentcar) / speed] [distance myself]
+      let x min-one-of tollbooths with [(queue * paytime) <= ((distance currentcar) / speed)] [distance myself]
       if x = nobody
       [
         set x min-one-of tollbooths [distance myself]
-        ask x [show distance currentcar]
       ]
       set heading towards x
       fd min (list 1 distance x)
@@ -120,7 +119,7 @@ to go
         set inline? true
       ]
     ]
-    if payedtoll? = true ;;get cars to move away from toll booth after paying queue
+    if payedtoll? = true ;;get cars to move away from toll booth after paying toll
     [
       let x min-one-of patches with [pcolor = blue] [distance myself]
       set heading towards x
@@ -147,6 +146,10 @@ to go
     ]
   ];;set queue count cars with
   tick
+end
+
+to clear-tollbooths
+  ask tollbooths [die]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -270,7 +273,7 @@ oddsofcar
 oddsofcar
 0
 1
-0.4
+0.6
 .1
 1
 NIL
@@ -348,6 +351,23 @@ BUTTON
 go-forever
 go
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+27
+433
+159
+466
+NIL
+clear-tollbooths\n
+NIL
 1
 T
 OBSERVER
