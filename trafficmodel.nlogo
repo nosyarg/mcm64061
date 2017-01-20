@@ -1,6 +1,6 @@
 breed [tollbooths tollbooth]
 breed [cars car]
-cars-own [payedtoll? inline?]
+cars-own [payedtoll? inline? target]
 tollbooths-own [queue]
 
 globals[mouse-was-down? placable? spawnx spawny currentcar]
@@ -34,7 +34,7 @@ to draw-road
       ]
       display
     ]
-end;; taken from model library "bryan's brain"
+end;; taken from model library "bryan's brain", used to draw colored patches
 
 to draw-entrance
   let erasing? orange = [pcolor] of patch mouse-xcor mouse-ycor
@@ -98,6 +98,7 @@ to go
     [
       set xcor spawnx
       set ycor spawny
+      set shape "car"
       set inline? false
       set payedtoll? false
     ];;spawn car at entrance
@@ -112,9 +113,11 @@ to go
       [
         set x min-one-of tollbooths [distance myself]
       ]
+      set target x
+      let endofline max-one-of other cars with [target = x] [nw:set-context]
       set heading towards x
       fd min (list 1 distance x)
-      if distance x = 0
+      if distance x < 1
       [
         set inline? true
       ]
@@ -129,11 +132,23 @@ to go
         die
       ]
     ]
+    if not inline?
+    [
+      let x min-one-of other cars with [not inline?] [distance myself]
+      if x != nobody
+      [
+        if (distance x) < .3
+        [
+          show "crash"
+          die
+        ]
+      ]
+    ];;set up crashing for not in line cars
   ]
   ask tollbooths
   [
     set queue count cars with [distance myself < 1]
-    if ticks mod paytime = 0
+    if random paytime = 1
     [
       let cartorelease one-of cars with [distance myself < 1]
       if cartorelease != nobody
@@ -144,7 +159,7 @@ to go
         ]
       ]
     ]
-  ];;set queue count cars with
+  ];;set queue to count cars
   tick
 end
 
@@ -180,10 +195,10 @@ ticks
 30.0
 
 BUTTON
-23
-178
-86
-211
+21
+244
+84
+277
 NIL
 clear\n
 NIL
@@ -197,10 +212,10 @@ NIL
 1
 
 BUTTON
-24
-259
-121
-292
+22
+325
+119
+358
 NIL
 draw-road
 T
@@ -214,10 +229,10 @@ NIL
 1
 
 BUTTON
-26
-305
-149
-338
+24
+371
+147
+404
 NIL
 draw-entrance
 T
@@ -231,10 +246,10 @@ NIL
 1
 
 BUTTON
-27
-350
-119
-383
+25
+416
+117
+449
 NIL
 draw-exit
 T
@@ -248,10 +263,10 @@ NIL
 1
 
 BUTTON
-26
-393
-153
-426
+24
+459
+151
+492
 NIL
 place-tollbooth\n
 T
@@ -273,17 +288,17 @@ oddsofcar
 oddsofcar
 0
 1
-0.6
+0.3
 .1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-23
-215
-86
-248
+21
+281
+84
+314
 NIL
 go
 NIL
@@ -327,10 +342,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-102
-187
-190
-220
+100
+253
+188
+286
 NIL
 clearcars\n
 NIL
@@ -344,10 +359,10 @@ NIL
 1
 
 BUTTON
-100
-224
-200
-257
+98
+290
+198
+323
 go-forever
 go
 T
@@ -361,10 +376,10 @@ NIL
 1
 
 BUTTON
-27
-433
-159
-466
+25
+499
+157
+532
 NIL
 clear-tollbooths\n
 NIL
@@ -376,6 +391,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+13
+139
+185
+172
+stopping-distance
+stopping-distance
+0
+1
+1
+.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
