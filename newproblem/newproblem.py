@@ -1,5 +1,10 @@
 from random import *
 
+def movecar(cartomove,targetlane):
+        newhghwy[cartomove.whchln[cartomove.pos]] = None
+        targetlane[cartomove.pos] = cartomove
+        cartomove.whchln = targetlane.lindex
+
 class car(object):
     namecounter = 0
     def __init__(self, whchln):
@@ -10,8 +15,11 @@ class car(object):
         car.namecounter+=1
         self.whchln = whchln
         car.setinitcspeed(self)   
- 
+
     def __str__(self):
+        return self.name
+   
+    def __repr__(self):
         return self.name
 
     def setinitcspeed(self):
@@ -48,26 +56,58 @@ class lane(object):
                 spcounter += 1
                 cposition -= 1
             return spcounter 
-    def canmerge(cartomerge):
-        firstahead = len(lnarray)
+    def canmerge(self,cartomerge):
+        firstahead = 0
         lastbehind = 0
-        for i in range(cartomerge.pos,len(lnarray)-1):
-                if(not (type(lnarray[i]) is type(none))):
-                        firstahead = lnarray[i].pos-lnarray[i].size
+        for i in range(cartomerge.pos,len(self.lnarry)-1):
+                if(not (type(self.lnarry[i]) is type(None))):
+                        firstahead = self.lnarry[i]
                         break
         for i in reversed(range(0,max(cartomerge.pos-cartomerge.size,0))):
-                if(not (type(lnarray[i]) is type(none))):
-                        lastbehind = lnarray[i].pos
+                if(not (type(self.lnarry[i]) is type(None))):
+                        lastbehind = self.lnarry[i]
                         break
+        thisafterfront = cartomerge.pos + cartomerge.speed
+        thisafterback = cartomerge.pos - cartomerge.size + cartomerge.speed
+        if(type(firstahead) == type(cartomerge)):
+                frontafterfront = firstahead.pos + firstahead.speed
+                frontafterback = max(firstahead.pos - firstahead.size + firstahead.speed,0)
+                thishitfront = thisafterfront > frontafterback & thisafterfront < frontafterfront
+                fronthitthis = thisafterback > frontafterback & thisafterback < frontafterfront
+                thisabsorbfront = frontafterfront > thisafterback & frontafterfront < thisafterfront
+                toofarforward = thishitfront | fronthitthis | thisabsorbfront
+        else:
+                toofarforward = 0
+        
+        if(type(lastbehind) == type(cartomerge)):
+                backafterfront = lastbehind.pos + lastbehind.speed
+                backafterback = lastbehind.pos - lastbehind.size + lastbehind.speed
+                thishitback = thisafterfront > backafterback & thisafterfront < backafterfront
+                backhitthis = thisafterback > backafterback & thisafterback < backafterfront
+                thisabsorbback = backafterfront > thisafterback & backafterfront < thisafterfront
+                toofarback = thishitback | backhitthis | thisabsorbback
+        else:
+                toofarback = 0
+
+        return (not toofarforward) & (not toofarback)
+        
+        
     def move_carinlane(self):
         # for the last car in the lane to the first car
         # move the car
 
         for i in reversed(range(len(self.lnarry))):
+
             if(type(self.lnarry[i]) is car):
                 #look left and calculate number of spaces to merge
                 x = lane.lookleft(self, i)
-                print("spcounter " + str(x), "laneindex" + str(self.lindex))
+                bouttamerge = 0
+                if(i>0):
+                        bouttamerge = (newhghwy.lnlst[self.lindex-1].canmerge(self.lnarry[i]))
+                #print("spcounter " + str(x), "laneindex" + str(self.lindex))
+                
+                if(bouttamerge):
+                        movecar(self.lnarry[i],newhghwy.lnlst[self.lindex-1])
 
                 #if adequate spaces then switch lanes and adopt behaviour of new lane
                 #else stay in same lane and continue to accelerate or adopt speed of car infront
@@ -109,7 +149,7 @@ def entercar(n_newhghwy):
     for laney in newhghwy.lnlst:
         laney.move_carinlane()
         laney.enter_carinlane()
-        
+
     #for each lane
         #move the car in the lane 
         #if lane has a spot then populate car
@@ -117,4 +157,11 @@ def entercar(n_newhghwy):
 
 for i in range(3):
     entercar(newhghwy)
+    print(
+    '''
+    THIS IS THE END OF A SECOND
 
+    THIS SHOULD BE REALLY OBVIOUS
+
+    NOTICE THIS
+    ''')
