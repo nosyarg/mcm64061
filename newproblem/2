@@ -1,0 +1,13 @@
+from random import *
+class car(object):
+        def __init__(self):
+                self.speed = 60
+
+lane = [0]*20
+print(lane)
+while(1):
+        if((lane[0] == 0) && random() < .2):
+               lane[0] = car()
+        for car,index in lane:
+                lane[index + car.speed // 60] = car
+                lane[index] = 0
