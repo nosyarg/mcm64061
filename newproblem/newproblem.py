@@ -10,7 +10,7 @@ class car(object):
     def __init__(self, whchln):
         self.size = 5
         self.name = "XX-" + str(car.namecounter)
-        self.speed = 0
+        self.speed = 1
         self.pos = 0
         car.namecounter+=1
         self.whchln = whchln
@@ -28,13 +28,6 @@ class car(object):
         elif self.whchln == 1:
             self.speed = 1 #40
 
-    '''
-    def setcarspeed(whchln, crrntspd):
-        if whchln == 0:
-            speed = 60
-        elif whchln == 1:
-            speed = 40 
-    '''
 
 class lane(object):
     def __init__(self, i, maxspeed, minspeed):
@@ -43,6 +36,25 @@ class lane(object):
         self.minspeed = minspeed
         self.lnarry = [None]*10
 
+    def nagelmodel(self, cobj):
+        #step 1 increment velocity by 1m/s^2 (acceleration)
+        cobj.speed += 1
+        #step 2 variation of canmerge(forward) to see how many spots are ahead
+        firstahead = 0    
+        for i in range(cobj.pos,len(self.lnarry)-1):
+            if(not (type(self.lnarry[i]) is type(None))):
+                firstahead = self.lnarry[i]
+            else:
+                break
+        #step 3 continue moving or adopt behavior of car in front
+        if(type(firstahead) is type(None)):
+            if cobj.speed > ((firstahead.pos-(firstahead.size)) - cobj.pos):
+                cobj.speed = firstahead.speed
+        #step 4 randomly reduce speed
+        if 0.05 > random():
+            cobj.speed -= 1
+
+
     def lookleft(self, cposition):
         mergelane = self.lindex - 1
         spcounter = 0
@@ -50,7 +62,6 @@ class lane(object):
         if mergelane < 0:
             return spcounter
         else:
-        #           print(type(newhghwy.lnlst[mergelane].lnarry[cposition]))
             while((type(newhghwy.lnlst[mergelane].lnarry[cposition]) is type(None)) & (cposition >= 0)):
             #if(type(newhghwy.lnlst[mergelane].lnarry[cposition]) is None):
                 spcounter += 1
@@ -91,44 +102,34 @@ class lane(object):
 
         return (not toofarforward) & (not toofarback)
         
-        
-    def move_carinlane(self):
-        # for the last car in the lane to the first car
-        # move the car
-
+    def handlemerges(self):
         for i in reversed(range(len(self.lnarry))):
-
             if(type(self.lnarry[i]) is car):
-                #look left and calculate number of spaces to merge
-                x = lane.lookleft(self, i)
+                self.nagelmodel(self.lnarry[i])
+                
                 bouttamerge = 0
                 if(self.lnarry[i].whchln):
                         bouttamerge = (newhghwy.lnlst[self.lindex-1].canmerge(self.lnarry[i]))
-                #print("spcounter " + str(x), "laneindex" + str(self.lindex))
                 
                 if(bouttamerge):
-                        print(self.lnarry[i])
                         movecar(self.lnarry[i],newhghwy.lnlst[self.lindex-1])
-                        #update position attribute of car object
-#                        newhghwy.lnlst[self.lindex-1].lnarry[i].pos = i + newhghwy.lnlst[self.lindex-1].lnarry[i].speed
-                        #update location of car in the lane
-#                        newhghwy.lnlst[self.lindex-1].lnarry[i + newhghwy.lnlst[self.lindex-1].lnarry[i].speed] = newhghwy.lnlst[self.lindex-1].lnarry[i]
-                        #car previous location is now empty
-#                        newhghwy.lnlst[self.lindex-1].lnarry[i] = None
-                #if adequate spaces then switch lanes and adopt behaviour of new lane
-                #else stay in same lane and continue to accelerate or adopt speed of car infront
-                
-                #car.setcarspeed(self.lnarry[i].whchln, self.lnarry[i].speed) 
 
+    def move_carinlane(self):
+        # for the last car in the lane to the first car
+        # move the car
+        
+        for i in reversed(range(len(self.lnarry))):
+        
+            if(type(self.lnarry[i]) is car):
                 #regular movement
-                if(not bouttamerge):
-                        if(i + self.lnarry[i].speed < len(self.lnarry)):
-                                #update position attribute of car object
-                                self.lnarry[i].pos = i + self.lnarry[i].speed
-                                #update location of car in the lane
-                                self.lnarry[i + self.lnarry[i].speed] = self.lnarry[i]
-                                #car previous location is now empty
-                                self.lnarry[i] = None
+                                
+                if(i + self.lnarry[i].speed < len(self.lnarry)):
+                        #update position attribute of car object
+                        self.lnarry[i].pos = i + self.lnarry[i].speed
+                        #update location of car in the lane
+                        self.lnarry[i + self.lnarry[i].speed] = self.lnarry[i]
+                        #car previous location is now empty
+                        self.lnarry[i] = None
 
     def enter_carinlane(self): 
         if((self.lnarry[0] is  None) & (0.2 > random())): 
@@ -151,6 +152,7 @@ newhghwy = highway()
 
 def entercar(n_newhghwy):
     for laney in newhghwy.lnlst:
+        laney.handlemerges()
         laney.move_carinlane()
         laney.enter_carinlane()
     for laney in newhghwy.lnlst:
