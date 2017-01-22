@@ -102,7 +102,7 @@ class lane(object):
                 #look left and calculate number of spaces to merge
                 x = lane.lookleft(self, i)
                 bouttamerge = 0
-                if(i>0):
+                if(self.lnarry[i].whchln):
                         bouttamerge = (newhghwy.lnlst[self.lindex-1].canmerge(self.lnarry[i]))
                 #print("spcounter " + str(x), "laneindex" + str(self.lindex))
                 
