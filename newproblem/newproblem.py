@@ -1,8 +1,8 @@
 from random import *
-
+from pdb import *
 def movecar(cartomove,targetlane):
-        newhghwy[cartomove.whchln[cartomove.pos]] = None
-        targetlane[cartomove.pos] = cartomove
+        newhghwy.lnlst[cartomove.whchln].lnarry[cartomove.pos] = None
+        targetlane.lnarry[cartomove.pos] = cartomove
         cartomove.whchln = targetlane.lindex
 
 class car(object):
@@ -50,7 +50,7 @@ class lane(object):
         if mergelane < 0:
             return spcounter
         else:
-            print(type(newhghwy.lnlst[mergelane].lnarry[cposition]))
+        #           print(type(newhghwy.lnlst[mergelane].lnarry[cposition]))
             while((type(newhghwy.lnlst[mergelane].lnarry[cposition]) is type(None)) & (cposition >= 0)):
             #if(type(newhghwy.lnlst[mergelane].lnarry[cposition]) is None):
                 spcounter += 1
@@ -107,29 +107,33 @@ class lane(object):
                 #print("spcounter " + str(x), "laneindex" + str(self.lindex))
                 
                 if(bouttamerge):
+                        print(self.lnarry[i])
                         movecar(self.lnarry[i],newhghwy.lnlst[self.lindex-1])
-
+                        #update position attribute of car object
+#                        newhghwy.lnlst[self.lindex-1].lnarry[i].pos = i + newhghwy.lnlst[self.lindex-1].lnarry[i].speed
+                        #update location of car in the lane
+#                        newhghwy.lnlst[self.lindex-1].lnarry[i + newhghwy.lnlst[self.lindex-1].lnarry[i].speed] = newhghwy.lnlst[self.lindex-1].lnarry[i]
+                        #car previous location is now empty
+#                        newhghwy.lnlst[self.lindex-1].lnarry[i] = None
                 #if adequate spaces then switch lanes and adopt behaviour of new lane
                 #else stay in same lane and continue to accelerate or adopt speed of car infront
                 
                 #car.setcarspeed(self.lnarry[i].whchln, self.lnarry[i].speed) 
 
                 #regular movement
-                if(i + self.lnarry[i].speed < len(self.lnarry)):
-                    #update position attribute of car object
-                    self.lnarry[i].pos = i + self.lnarry[i].speed
-                    #update location of car in the lane
-                    self.lnarry[i + self.lnarry[i].speed] = self.lnarry[i]
-                    #car previous location is now empty
-                    self.lnarry[i] = None
-                else:
-                    self.lnarry[i] = None
+                if(not bouttamerge):
+                        if(i + self.lnarry[i].speed < len(self.lnarry)):
+                                #update position attribute of car object
+                                self.lnarry[i].pos = i + self.lnarry[i].speed
+                                #update location of car in the lane
+                                self.lnarry[i + self.lnarry[i].speed] = self.lnarry[i]
+                                #car previous location is now empty
+                                self.lnarry[i] = None
 
     def enter_carinlane(self): 
         if((self.lnarry[0] is  None) & (0.2 > random())): 
             self.lnarry[0] = car(self.lindex)
             
-        print(self.lnarry)
         # check if the spots equal to size + 1 are empty in the lane
         # if the space is empty then create a car and speed equals 5
         # car occupies that many slots
@@ -137,9 +141,9 @@ class lane(object):
 class highway(object):
     def __init__(self):
         self.lnlst = []
-        self.maxlanes = 2
-        maxspeed = [80, 60]
-        minspeed = [60, 40]
+        self.maxlanes = 3
+        maxspeed = [80, 60, 40]
+        minspeed = [60, 40, 20]
         for i in range(self.maxlanes):
             self.lnlst.append(lane(i, maxspeed[i], minspeed[i]))
 
@@ -149,13 +153,14 @@ def entercar(n_newhghwy):
     for laney in newhghwy.lnlst:
         laney.move_carinlane()
         laney.enter_carinlane()
-
+    for laney in newhghwy.lnlst:
+        print(laney.lnarry)
     #for each lane
         #move the car in the lane 
         #if lane has a spot then populate car
         #else car waits for empty space
 
-for i in range(3):
+for i in range(30):
     entercar(newhghwy)
     print(
     '''
